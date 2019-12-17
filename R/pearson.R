@@ -130,7 +130,7 @@ pValueFromCor <- function(n, stat, method=c("pearson","kendall", "spearman")) {
     #
     df <- n - 2
     t <- stat*sqrt(df/(1-stat^2))
-    result <- .pValueFromTNew("t"=t, "n1"=n-1, "n2"=0, var.equal=TRUE)
+    result <- pValueFromT("t"=t, "n1"=n-1, "n2"=0, var.equal=TRUE)
   } else if (method[1] == "kendall"){
     if (n > 2 && n < 50) {
       # Exact sampling distribution
@@ -175,7 +175,7 @@ pValueFromCor <- function(n, stat, method=c("pearson","kendall", "spearman")) {
 #' @export
 #'
 #' @examples
-pValueFromTNew <- function(t, n1, n2 = 0, var.equal = TRUE) {
+pValueFromT <- function(t, n1, n2 = 0, var.equal = TRUE) {
   # Function returns the p value from t statistic
   #
   # Args:
