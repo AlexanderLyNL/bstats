@@ -117,11 +117,6 @@ pValueFromCor <- function(n, stat, method=c("pearson","kendall", "spearman")) {
                  "less"=sidedList)
 
   if (n <= 2){
-    # result[["two.sided"]] <- sidedList
-    # # tau < 0
-    # result[["less"]] <- sidedList
-    # # tau > 0
-    # result[["greater"]] <- sidedList
     return(result)
   }
 
@@ -161,7 +156,7 @@ pValueFromCor <- function(n, stat, method=c("pearson","kendall", "spearman")) {
 }
 
 
-# TODO(Alexander): Unify ".pValueFromT", and check that this is not used in Alexandra's rewrite or somehwere else
+# TODO(Alexander): Unify "pValueFromT", and check that this is not used in Alexandra's rewrite or somehwere else
 # The important difference is that it now outputs a list
 #
 #' Function returns the p value from correlation.
