@@ -1,4 +1,3 @@
-# 0. Helpers ------------
 #' Try to evaluate an expression, if not fail with NA (default)
 #'
 #' @param expr Expression to be evaluated
@@ -18,7 +17,6 @@ tryOrFailWithNA <- function(expr, value=NA_real_) {
 }
 
 
-# TODO(Alexander): Ask Don to catch message of stopifnot
 #' Ensure the Truth of R Expressions and returns TRUE if the expressions are not met.
 #'
 #' This is basically stopifnot{base}, but instead of stopping it returns TRUE. The following descriptions is
@@ -31,7 +29,9 @@ tryOrFailWithNA <- function(expr, value=NA_real_) {
 #' @export
 #'
 #' @examples
-#'
+#' x <- 0
+#' msg <- failIfNot(x > 3)
+#' print(msg)
 failIfNot <- function (...) {
   # This is equivalent to
   #
@@ -89,99 +89,181 @@ failIfNot <- function (...) {
   return(result)
 }
 
-
-
-
-#' Checks every element using the provided function
+# Some/any checks -----------
+#'Checks whether some object evaluates to TRUE for a provided criterion function
 #'
-#' @param ... objects that need testing for try error
+#' @param ... objects that need testing
+#' @param func function used to evaluate the truth
 #'
-#' @return Returns FALSE if there's a single element that does not check out, and TRUE if all elements check out
+#' @return Returns TRUE if there's some object that evaluates to TRUE according to func, and FALSE if all func
+#' evaluations lead to FALSE
 #' @export
 #'
 #' @examples
-isEvery <- function(..., func) {
-  # TODO: Make these to return at first find
-  obj <- list(...)
-  return(purrr::every(obj, func))
-}
-
-isSomeNA <- function(...) {
-  return(isSome(..., "func"=anyNA, recursive=TRUE))
-}
-
-
+#' x <- 1
+#' y <- "a"
+#' z <- NA
+#'
+#' isSome(x, y, z, func=is.numeric)
+#' isSome(x, y, z, func=is.na)
+#' isSome(x, y, z, func=is.vector)
+#' isSome(x, y, func=is.na)
 isSome <- function(..., func) {
   # TODO: Make these to return at first find
   obj <- list(...)
   return( purrr::some(obj, func) )
 }
 
-#' Checks for try errors.
+#'Checks whether some object is NA
 #'
-#' @param ... objects that need testing for try error
+#' @inheritParams isSome
 #'
-#' @return Returns TRUE whenever there's a single try-error, FALSE otherwise
+#' @return Returns TRUE if there's some object that's an NA, FALSE when all objects are not NA.
 #' @export
 #'
 #' @examples
-#' kaas <- try(integrate(exp, -Inf, Inf))
-#' isTryError(kaas)
+#' x <- 1
+#' y <- "a"
+#' z <- NA
 #'
-isTryError <- function(...) {
-  return(isSome(..., func=function(x){inherits(x, "try-error")}))
+#' isSomeNA(x, y)
+#' isSomeNA(x, y, z)
+isSomeNA <- function(...) {
+  return(isSome(..., "func"=anyNA, recursive=TRUE))
 }
 
-
-#' Check for any NULL
+#'Checks whether some object is NULL
 #'
-#' @param ... objects that need testing for try error
+#' @inheritParams isSome
 #'
-#' @return Returns TRUE if there's a single NULL, returns FALSE if no NULL
+#' @return Returns TRUE if there's some object that's a NULL, FALSE when all objects are not NULL
 #' @export
 #'
 #' @examples
+#' x <- 1
+#' y <- "a"
+#' z <- NULL
+#'
+#' isSomeNull(x, y)
+#' isSomeNull(x, y, z)
 isSomeNull <- function(...) {
   return(isSome(..., func=is.null))
 }
 
 
-#' Check for whether all are numeric
+#'Checks whether some object is infinite
 #'
-#' @param ... objects that need testing for being numeric
+#' @inheritParams isSome
+#'
+#' @return Returns TRUE if there's some object that's infinite, FALSE when all objects are finite
+#' @export
+#'
+#'@examples
+#' x <- 1
+#' y <- "a"
+#' z <- 10^(1e10)
+#'
+#' isSomeInfinite(x, y)
+#' isSomeInfinite(x, y, z)
+#' isSomeInfinite(x, y, z, w)
+isSomeInfinite <- function(...) {
+  isSome(..., func=is.infinite)
+}
+
+#'Checks whether some object is TRUE
+#'
+#' @inheritParams isSome
+#'
+#' @return Returns TRUE if there's some object that's TRUE, FALSE when all objects are not TRUE
+#' @export
+#'
+#' @examples
+#' x <- 1
+#' y <- "a"
+#' z <- TRUE
+#'
+#' isSomeTrue(x, y)
+#' isSomeTrue(x, y, z)
+isSomeTrue <- function(...) {
+  isSome(..., func=isTRUE)
+}
+
+
+
+#' Checks whether some object is a try error.
+#'
+#' @inheritParams isSome
+#'
+#' @return Returns TRUE if there's some object that's a try-error, FALSE when all objects are not try-errors
+#' @export
+#'
+#' @examples
+#' x <- 1
+#' y <- "a"
+#' z <- try(integrate(exp, -Inf, Inf))
+#' isTryError(x, y)
+#' isTryError(x, y, z)
+isTryError <- function(...) {
+  return(isSome(..., func=function(x){inherits(x, "try-error")}))
+}
+
+
+# Every/all checks -----------
+
+#' Checks whether all objects evalutes to TRUE for a provided function criterion
+#'
+#' @inheritParams isSome
+#'
+#' @return Returns TRUE if any objects are a try error, returns FALSE otherwise
+#' @export
+#'
+#' @examples
+#' x <- 1
+#' y <- "a"
+#' z <- NA
+#'
+#' isEvery(x, y, z, func=is.numeric)
+#' isEvery(x, y, z, func=is.na)
+#' isEvery(x, y, z, func=is.vector)
+isEvery <- function(..., func) {
+  # TODO: Make these to return at first find
+  obj <- list(...)
+  return(purrr::every(obj, func))
+}
+
+#' Checks whether all objects are numeric
+#'
+#' @inheritParams isSome
 #'
 #' @return Returns TRUE if all objects are numeric, returns FALSE otherwise
 #' @export
 #'
 #' @examples
+#' x <- 1
+#' y <- 2
+#' z <- "3"
+#'
+#' isEveryNumeric(x, y)
+#' isEveryNumeric(x, y, z)
 isEveryNumeric <- function(...) {
   # TODO: Make these to return at first find
   return(isEvery(..., func=is.numeric))
 }
 
-
-#' Check for any NA
+#' Checks whether all objects are finite
 #'
-#' @param ... objects that need testing for NA
+#' @inheritParams isSome
 #'
-#' @return Returns TRUE if any is NA, or its decendants are NA, returns FALSE otherwise
+#' @return Returns TRUE if all objects are finite, returns FALSE otherwise
 #' @export
 #'
 #' @examples
-isSomeNA <- function(...) {
-  # TODO: Make these to return at first find
-  return(isSome(..., func=is.na))
-}
-
+#' x <- 1
+#' y <- 2
+#' z <- 10^(1e10)
+#'
+#' isEveryFinite(x, y)
+#' isEveryFinite(x, y, z)
 isEveryFinite <- function(...) {
   isEvery(..., func=is.finite)
 }
-
-isSomeInfinite <- function(...) {
-  isSome(..., func=is.infinite)
-}
-
-isSomeTrue <- function(...) {
-  isSome(..., func=isTRUE)
-}
-

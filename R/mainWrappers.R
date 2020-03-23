@@ -21,10 +21,15 @@
 #' @export
 #'
 #' @examples
+#' x <- rnorm(100)
+#' y <- rnorm(100)
+#'
+#' bcor.test(x, y)
+#' bcor.test(x, y, method="kendall")
 bcor.test <- function(x, y, alternative=c("two.sided", "less", "greater"),
                       method=c("pearson", "kendall", "spearman"), ciValue=0.95,
-                      use="pairwise.complete.obs",
-                      h0=0, kappa=1, hyperGeoOverFlowThreshold=25, oneThreshold=0.001, var=1) {
+                      use="pairwise.complete.obs", h0=0, kappa=1, hyperGeoOverFlowThreshold=25,
+                      oneThreshold=0.001, var=1) {
   if (is.null(method)) {
     result <- computePearsonBCor(NULL, NULL)
     result[["error"]] <- "No method selected"
@@ -46,6 +51,17 @@ bcor.test <- function(x, y, alternative=c("two.sided", "less", "greater"),
   return(result)
 }
 
+#' Summary stats version of "bcor.test()"
+#'
+#' @param n
+#' @param stat
+#' @inherit bcor.test
+#'
+#' @export
+#'
+#' @examples#'
+#' bcor.testSumStat(n=34, stat=0.4)
+#' bcor.testSumStat(n=34, stat=0.4, method="kendall")
 bcor.testSumStat <- function(n, stat, alternative=c("two.sided", "less", "greater"),
                              method=c("pearson", "kendall", "spearman"), ciValue=0.95,
                              h0=0, kappa=1, hyperGeoOverFlowThreshold=25, oneThreshold=0.001, var=1) {
@@ -75,9 +91,19 @@ bcor.testSumStat <- function(n, stat, alternative=c("two.sided", "less", "greate
                                      "oneThreshold" = oneThreshold)
   }
   result[["alternative"]] <- alternative
+  result[["method"]] <- method
   return(result)
 }
 
+#' Function to grab sided ("two.sided", "greater", "less") information of an bfObject with extra items
+#'
+#' @param bfObject
+#' @param alternative
+#' @param itemNames optional character strings, that specify additional items from bfObject
+#'
+#' @return a (sub)list of bfObject
+#'
+#' @examples
 getSidedObject <- function(bfObject, alternative="two.sided", itemNames=NULL) {
   result <- modifyList(bfObject[[alternative]], bfObject[itemNames])
 }
@@ -96,8 +122,11 @@ getSidedObject <- function(bfObject, alternative="two.sided", itemNames=NULL) {
 #' @export
 #'
 #' @examples
-computeCorPosteriorLine <- function(bfObject, method="pearson", alternative="two.sided", minX=-0.985, maxX=0.985) {
+computeCorPosteriorLine <- function(bfObject, alternative="two.sided", minX=-0.985, maxX=0.985) {
+  method <- bfObject[["method"]]
+
   xDomain <- seq(minX, maxX, length.out = 1001)
+
   if (alternative %in% c("two-sided", "two.sided")) {
     alternative <- "two.sided"
   } else if (alternative %in% c("greater", "right", "positive")) {
@@ -107,7 +136,7 @@ computeCorPosteriorLine <- function(bfObject, method="pearson", alternative="two
   }
 
   sidedObject <- getSidedObject("bfObject"=bfObject, "alternative"=alternative,
-                                 itemNames=c("error", "h0"))
+                                 itemNames=c("error", "h0", "betaA", "betaB", "ciValue"))
 
   # Note(Alexander): Don't compute if it's already computed
   #
@@ -138,8 +167,10 @@ computeCorPosteriorLine <- function(bfObject, method="pearson", alternative="two
 
     # TODO(Alexander): Derive this for shifted h0/Find master student
     #
-    sidedObject[["priorAtH0"]] <- priorRho("rho"=sidedObject[["h0"]], "kappa"=bfObject[["kappa"]], alternative=alternative)
-    sidedObject[["priorLine"]] <- priorRho("rho"=xDomain, "kappa"=bfObject[["kappa"]], alternative=alternative)
+    sidedObject[["priorAtH0"]] <- priorRho("rho"=sidedObject[["h0"]], "kappa"=bfObject[["kappa"]],
+                                           "alternative"=alternative)
+    sidedObject[["priorLine"]] <- priorRho("rho"=xDomain, "kappa"=bfObject[["kappa"]],
+                                           "alternative"=alternative)
 
     subCounter <- 1
 
@@ -218,9 +249,19 @@ computeCorPosteriorLine <- function(bfObject, method="pearson", alternative="two
 #' @export
 #'
 #' @examples
-computeCorSequentialLine <- function(x, y, bfObject, method="pearson") {
+#' x <- rnorm(100)
+#' y <- rnorm(100)
+#' bfObject <- bcor.test(x, y, method="kendall")
+#'
+#' computeCorSequentialLine <- computeCorSequentialLine(x, y, bfObject)
+#' graphics::plot(computeCorSequentialLine$nDomain,
+#'                log(computeCorSequentialLine$less$sequentialLine),
+#'                type="l", xlab="n", ylab=expression(log("BF"[10])))
+computeCorSequentialLine <- function(x, y, bfObject) {
   # sidedObject <- getSidedObject(bfObject, alternative=alternative)
   #
+  method <- bfObject[["method"]]
+
   error <- bfObject[["error"]]
   bf10 <- bfObject[["two.sided"]][["bf"]]
 
@@ -323,7 +364,15 @@ computeCorSequentialLine <- function(x, y, bfObject, method="pearson") {
 #' @export
 #'
 #' @examples
-computeCorRobustnessLine <- function(bfObject, method="pearson") {
+#' bfObject <- bcor.testSumStat(n=34, stat=0.3)
+#' result <- computeCorRobustnessLine(bfObject)
+#'
+#' xLine <- result$kappaDomain
+#' yLine <- result$two.sided$robustnessLine
+#' yMax <- result$two.sided$robustnessMaxBf
+#' plot(xLine, yLine, ylim=c(0, yMax), type="l")
+computeCorRobustnessLine <- function(bfObject) {
+  method <- bfObject[["method"]]
   error <- bfObject[["error"]]
   bf10 <- bfObject[["two.sided"]][["bf"]]
 
