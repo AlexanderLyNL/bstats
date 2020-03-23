@@ -249,6 +249,14 @@ computeCorPosteriorLine <- function(bfObject, alternative="two.sided", minX=-0.9
 #' @export
 #'
 #' @examples
+#' x <- rnorm(100)
+#' y <- rnorm(100)
+#' bfObject <- bcor.test(x, y, method="kendall")
+#'
+#' computeCorSequentialLine <- computeCorSequentialLine(x, y, bfObject)
+#' graphics::plot(computeCorSequentialLine$nDomain,
+#'                log(computeCorSequentialLine$less$sequentialLine),
+#'                type="l", xlab="n", ylab=expression(log("BF"[10])))
 computeCorSequentialLine <- function(x, y, bfObject) {
   # sidedObject <- getSidedObject(bfObject, alternative=alternative)
   #
@@ -356,6 +364,13 @@ computeCorSequentialLine <- function(x, y, bfObject) {
 #' @export
 #'
 #' @examples
+#' bfObject <- bcor.testSumStat(n=34, stat=0.3)
+#' result <- computeCorRobustnessLine(bfObject)
+#'
+#' xLine <- result$kappaDomain
+#' yLine <- result$two.sided$robustnessLine
+#' yMax <- result$two.sided$robustnessMaxBf
+#' plot(xLine, yLine, ylim=c(0, yMax), type="l")
 computeCorRobustnessLine <- function(bfObject) {
   method <- bfObject[["method"]]
   error <- bfObject[["error"]]
