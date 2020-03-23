@@ -1,3 +1,4 @@
+# 1. Prior ------------
 
 stretchedBeta <- function(rho, betaA, betaB) {
   result <- 1/2*dbeta((rho+1)/2, betaA, betaB)
@@ -9,12 +10,29 @@ stretchedBeta <- function(rho, betaA, betaB) {
 #'
 #' @param rho numeric in (-1, 1) at which the prior needs to be evaluated
 #' @param kappa numeric > 0 which provides the scale of
-#' @param alternative
+#' @param alternative a character string specifying the alternative hypothesis must be one of "two.sided" (default),
+#' "greater" or "less"
 #'
-#' @return
+#' @return numeric, the density value at rho
 #' @export
 #'
 #' @examples
+#' priorRho(0.4)
+#'
+#' rhoDomain <- seq(-0.99, 0.99, by=0.01)
+#'
+#' # kappa <- 1 refers to the uniform distribution
+#' priorRho(rhoDomain)
+#'
+#' # kappa <- 2, e.g., beta(1/2, 1/2), is needed for information consistency
+#' yLine <- priorRho(rhoDomain, kappa=2)
+#'
+#' graphics::plot(rhoDomain, yLine, type="l")
+#'
+#' # kappa <- 1 refers to the uniform distribution, but "greater" truncates it
+#' yLine <- priorRho(rhoDomain, alternative="greater")
+#'
+#' graphics::plot(rhoDomain, yLine, type="l")
 priorRho <- function(rho, kappa=1, alternative="two.sided") {
   if (alternative == "two.sided") {
     priorLine <- stretchedBeta("rho"=rho, "betaA"=1/kappa, "betaB"=1/kappa)
@@ -26,6 +44,21 @@ priorRho <- function(rho, kappa=1, alternative="two.sided") {
   return(priorLine)
 }
 
+#' Prior for Pearson's rho restricted to positive values
+#'
+#' @inherit priorRho
+#' @export
+#'
+#' @examples
+#' priorRhoPlus(0.4)
+#' priorRhoPlus(-0.4)
+#'
+#' rhoDomain <- seq(-0.99, 0.99, by=0.01)
+#'
+#' # kappa <- 2, e.g., beta(1/2, 1/2), is needed for information consistency
+#' yLine <- priorRhoPlus(rhoDomain, kappa=2)
+#'
+#' graphics::plot(rhoDomain, yLine, type="l")
 priorRhoPlus <- function(rho, kappa=1) {
   nonNegativeIndex <- rho >=0
   lessThanOneIndex <- rho <=1
@@ -35,6 +68,20 @@ priorRhoPlus <- function(rho, kappa=1) {
   return(result)
 }
 
+#' Prior for Pearson's rho restricted to negative values
+#'
+#' @inherit priorRho
+#'
+#' @examples
+#' priorRhoMin(0.4)
+#' priorRhoMin(-0.4)
+#'
+#' rhoDomain <- seq(-0.99, 0.99, by=0.01)
+#'
+#' # kappa <- 2, e.g., beta(1/2, 1/2), is needed for information consistency
+#' yLine <- priorRhoMin(rhoDomain, kappa=2)
+#'
+#' graphics::plot(rhoDomain, yLine, type="l")
 priorRhoMin <- function(rho, kappa=1) {
   negativeIndex <- rho <=0
   greaterThanMinOneIndex <- rho >= -1
@@ -100,7 +147,7 @@ m1MarginalLikelihoodNoRho <- function(s, t, n, r, rho) {
 }
 
 
-#' Function returns the p value from correlation.
+#' Computes the the p value based on the observed correlation.
 #'
 #' @param r numeric in (-1, 1) representing the sample correlation
 #' @param n integer representing sample size
