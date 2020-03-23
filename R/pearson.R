@@ -1101,7 +1101,7 @@ computePearsonCredibleInterval <- function(betaA, betaB, ciValue, h0=0) {
   #
   check <- failIfNot(betaA > 0, betaB > 0, ciValue > 0, ciValue < 1, !isSomeNull(betaA, betaB))
 
-  failedResult <- list("lowerCi"=NA, "upperCi"=NA, "posteriorMedian"=NA, "ciValue"=ciValue)
+  failedResult <- list("lowerCi"=NA, "upperCi"=NA, "posteriorMedian"=NA)
   result <- list("two.sided"=failedResult, "greater"=failedResult, "less"=failedResult,
                  "ciValue"=ciValue, "betaA"=betaA, "betaB"=betaB)
 

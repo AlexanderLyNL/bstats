@@ -1,30 +1,19 @@
 # 1. Priors for Kendall's Tau -------------
 #
-stretchedBetaTau <- function(tauPop, alpha=1, beta=1) {
-  logResult <- tryOrFailWithNA((-alpha-beta)*log(2) + (alpha-1)*log(1+sin(pi/2*tauPop))
-                               + (beta-1)*log(1-sin(pi/2*tauPop)) + log(cos(pi/2*tauPop) - lbeta(alpha, beta))
-  )
-
-  if (is.na(logResult))
-    result <- tryOrFailWithNA(
-      pi * 2^(-alpha-beta)/beta(alpha, beta) * (1+sin(pi/2*tauPop))^(alpha-1) *
-        (1-sin(pi/2*tauPop))^(beta-1) * cos(pi/2*tauPop)
-    )
-  else {
-    result <- pi * exp(logResult)
-  }
+stretchedBetaTau <- function(tauPop, betaA=1, betaB=1) {
+  result <- stretchedBeta(sin(pi*tauPop/2), betaA=betaA, betaB=betaB)*cos(pi*tauPop/2)*pi/2
   return(result)
 }
 
-stretchedBetaTauSymmetric <- function(tauPop, alpha=1) {
-  result <- ((pi*2^(-2*alpha))/beta(alpha, alpha))  * cos((pi*tauPop)/2)^(2*alpha-1)
+stretchedBetaTauSymmetric <- function(tauPop, betaA=1) {
+  result <- ((pi*2^(-2*betaA))/beta(betaA, betaA)) * cos((pi*tauPop)/2)^(2*betaA-1)
   return(result)
 }
 
 
 priorTau <- function(tauPop, kappa=1, alternative="two.sided") {
   if (alternative == "two.sided") {
-    priorLine <- stretchedBetaTauSymmetric(tauPop, alpha = 1/kappa)
+    priorLine <- stretchedBetaTauSymmetric(tauPop, betaA = 1/kappa)
   } else if (alternative == "greater") {
     priorLine <- priorTauPlus("tauPop"=tauPop, "kappa"=kappa)
   } else if (alternative == "less") {
