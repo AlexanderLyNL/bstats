@@ -1,5 +1,4 @@
 # 1. Prior ------------
-
 stretchedBeta <- function(rho, betaA, betaB) {
   result <- 1/2*dbeta((rho+1)/2, betaA, betaB)
   return(result)
@@ -33,15 +32,20 @@ stretchedBeta <- function(rho, betaA, betaB) {
 #' yLine <- priorRho(rhoDomain, alternative="greater")
 #'
 #' graphics::plot(rhoDomain, yLine, type="l")
-priorRho <- function(rho, kappa=1, alternative="two.sided") {
-  if (alternative == "two.sided") {
-    priorLine <- stretchedBeta("rho"=rho, "betaA"=1/kappa, "betaB"=1/kappa)
-  } else if (alternative == "greater") {
-    priorLine <- priorRhoPlus("rho"=rho, "kappa"=kappa)
-  } else if (alternative =="less" ) {
-    priorLine <- priorRhoMin("rho"=rho, "kappa"=kappa)
-  }
+priorRho <- function(rho, kappa=1, alternative="two.sided", betaA=NULL, betaB=NULL) {
+  priorLine <- switch(alternative,
+                      "two.sided"=priorRhoTwoSided("rho"=rho, "kappa"=kappa, "betaA"=betaA, "betaB"=betaB),
+                      "greater"=priorRhoPlus("rho"=rho, "kappa"=kappa, "betaA"=betaA, "betaB"=betaB),
+                      "less"=priorRhoMin("rho"=rho, "kappa"=kappa, "betaA"=betaA, "betaB"=betaB))
   return(priorLine)
+}
+
+priorRhoTwoSided <- function(rho, kappa=1, betaA=NULL, betaB=NULL) {
+  if (is.null(betaA) || is.null(betaB))
+    result <- stretchedBeta("rho"=rho, "betaA"=1/kappa, "betaB"=1/kappa)
+  else
+    result <- stretchedBeta("rho"=rho, "betaA"=betaA, "betaB"=betaB)
+  return(result)
 }
 
 #' Prior for Pearson's rho restricted to positive values
@@ -59,12 +63,18 @@ priorRho <- function(rho, kappa=1, alternative="two.sided") {
 #' yLine <- priorRhoPlus(rhoDomain, kappa=2)
 #'
 #' graphics::plot(rhoDomain, yLine, type="l")
-priorRhoPlus <- function(rho, kappa=1) {
-  nonNegativeIndex <- rho >=0
-  lessThanOneIndex <- rho <=1
+priorRhoPlus <- function(rho, kappa=1, betaA=NULL, betaB=NULL) {
+  nonNegativeIndex <- rho >= 0
+  lessThanOneIndex <- rho <= 1
   valueIndex <- as.logical(nonNegativeIndex*lessThanOneIndex)
   result <- rho*0
-  result[valueIndex] <- 2*priorRho(rho[valueIndex], kappa)
+
+  if (is.null(betaA) || is.null(betaB)) {
+    result[valueIndex] <- 2*priorRhoTwoSided("rho"=rho[valueIndex], "kappa"=kappa)
+  } else {
+    result[valueIndex] <- 1/pbeta(1/2, "shape1"=betaA, "shape2"=betaB, lower.tail = FALSE)*
+      priorRhoTwoSided("rho"=rho[valueIndex], "betaA"=betaA, "betaB"=betaB)
+  }
   return(result)
 }
 
@@ -82,39 +92,69 @@ priorRhoPlus <- function(rho, kappa=1) {
 #' yLine <- priorRhoMin(rhoDomain, kappa=2)
 #'
 #' graphics::plot(rhoDomain, yLine, type="l")
-priorRhoMin <- function(rho, kappa=1) {
+priorRhoMin <- function(rho, kappa=1, betaA=NULL, betaB=NULL) {
   negativeIndex <- rho <=0
   greaterThanMinOneIndex <- rho >= -1
   valueIndex <- as.logical(negativeIndex*greaterThanMinOneIndex)
   result <- rho*0
-  result[valueIndex] <- 2*priorRho(rho[valueIndex], kappa)
+
+  if (is.null(betaA) || is.null(betaB)) {
+    result[valueIndex] <- 2*priorRhoTwoSided("rho"=rho[valueIndex], "kappa"=kappa)
+  } else {
+    result[valueIndex] <- 1/pbeta(1/2, "shape1"=betaA, "shape2"=betaB)*
+      priorRhoTwoSided("rho"=rho[valueIndex], "betaA"=betaA, "betaB"=betaB)
+  }
   return(result)
 }
+
+
+
+
 
 # 2. Likelihood -------------
 # These are the functions used for the likelihood
 #
 aFunction <- function(n, r, rho) {
+  # Here already preprocessed A simplified via f15.3.3
+  # the result is passed through to use the computational method f15.1.1
   hyperTerm <- Re(hypergeo::f15.1.1("A"=1-n/2, "B"=1-n/2, "C"=1/2, "z"=(r*rho)^2))
   result <- exp(((n-1)/2)*log(1-rho^2) + (3/2-n)*log(1-(r*rho)^2))*hyperTerm
   return(result)
-
-  # hyperTerm <- Re(hypergeo::f15.3.3("A"=(n-1)/2, "B"=(n-1)/2, "C"=1/2, "z"=(r*rho)^2))
-  # result <- (1-rho^2)^((n-1)/2)*(1-(r*rho)^2)^(3/2-n)*hyperTerm
 }
 
 bFunction <- function(n, r, rho) {
-  hyperTerm <- Re(hypergeo::f15.1.1("A"=(3-n)/2, "B"=(3-n)/2, "C"=3/2, "z"=(r*rho)^2))
-  # hyperTerm <- Re(hypergeo::f15.3.3("A"=n/2, "B"=n/2, "C"=3/2, "z"=(r*rho)^2))
+  # Here already preprocessed A simplified via f15.3.3
+  # the result is passed through to use the computational method f15.1.1
+
+  hyperTerm <- try(Re(hypergeo::f15.1.1("A"=(3-n)/2, "B"=(3-n)/2, "C"=3/2, "z"=(r*rho)^2)))
+
+  # if (isTryError(hyperTerm))
+  #   hyperTerm <- Re(hypergeo::f15.3.3("A"=(3-n)/2, "B"=(3-n)/2, "C"=3/2, "z"=(r*rho)^2))
+
   logTerm <- 2*(lgamma(n/2)-lgamma((n-1)/2))+((n-1)/2)*log(1-rho^2)+(3/2-n)*log(1-(r*rho)^2)
+
   result <- 2*r*rho*exp(logTerm)*hyperTerm
   return(result)
 }
 
+# hFunction <- function(n, r, rho) {
+#   result <- aFunction("n"=n, "r"=r, rho) + bFunction("n"=n, "r"=r, rho)
+#   return(result)
+# }
+
 hFunction <- function(n, r, rho) {
-  result <- aFunction("n"=n, "r"=r, rho) + bFunction("n"=n, "r"=r, rho)
-  return(result)
+  logTerm <- (n-1)/2*log(1-rho^2)+(3/2-n)*log(1-(r*rho)^2)
+
+  rhoFactor <- exp(logTerm)
+
+  aHyper <- Re(hypergeo::f15.1.1("A"=1-n/2, "B"=1-n/2, "C"=1/2, "z"=(r*rho)^2))
+  bHyper <- Re(hypergeo::f15.1.1("A"=(3-n)/2, "B"=(3-n)/2, "C"=3/2, "z"=(r*rho)^2))
+
+  hyperTerms <- aHyper+2*r*rho*exp(2*(lgamma(n/2)-lgamma((n-1)/2)))*bHyper
+
+  return(rhoFactor*hyperTerms)
 }
+
 
 hFunctionCombined <- function(nOri, rOri, nRep, rRep, rho) {
   result <- hFunction(n=nOri, r=rOri, rho)*hFunction(n=nRep, r=rRep, rho)
@@ -945,6 +985,43 @@ posteriorRhoFisherApprox <- function(bfObject, rho, alternative="two.sided") {
   }
 }
 
+posteriorRhoFuncU <- function(n, r, kappa=1, betaA=NULL, betaB=NULL, alternative="two.sided") {
+  result <- function(rho) {
+    hyperTerms <- 1
+    logTerm <- 0
+
+    for (i in seq_along(n)) {
+      aHyper <- Re(hypergeo::f15.1.1("A"=1-n[i]/2, "B"=1-n[i]/2, "C"=1/2, "z"=(r[i]*rho)^2))
+      bHyper <- Re(hypergeo::f15.1.1("A"=(3-n[i])/2, "B"=(3-n[i])/2, "C"=3/2, "z"=(r[i]*rho)^2))
+
+      hHyper <- aHyper+2*r[i]*rho*exp(2*(lgamma(n[i]/2)-lgamma((n[i]-1)/2)))*bHyper
+
+      hyperTerms <- hyperTerms * hHyper
+
+      logTerm <- logTerm+(n[i]-1)/2*log(1-rho^2)+(3/2-n[i])*log(1-(r[i]*rho)^2)
+    }
+
+    tempResult <- exp(logTerm)*hyperTerms*priorRho("rho"=rho, "kappa"=kappa, "alternative"=alternative,
+                                                   "betaA"=betaA, "betaB"=betaB)
+    return(tempResult)
+  }
+}
+
+posteriorRhoFunc <- function(n, r, kappa=1, betaA=NULL, betaB=NULL, alternative="two.sided") {
+  posteriorRhoU <- posteriorRhoFuncU(n, r, kappa=1, betaA=NULL, betaB=NULL, alternative="two.sided")
+
+  normalisingConstant <- tryOrFailWithNA(integrate(posteriorRhoU, -1, 1)$value)
+
+  if (is.na(normalisingConstant))
+    stop("Not integrable posterior")
+
+  result <- function(rho)
+    posteriorRhoU(rho)/normalisingConstant
+
+  return(result)
+}
+
+
 approximatePosteriorRho <- function(rho, n, r) {
   if (n <= 3) {
     std <- 1
@@ -1308,21 +1385,18 @@ bfCorrieRepJosineKernel <- function(nOri, rOri, nRep, rRep, kappa=1, methodNumbe
                                   bf10=NA, bfPlus0=NA, bfMin0=NA),
                  repMethodNumber=methodNumber)
 
-  if (is.infinite(oriObj[["two.sided"]][["bf"]])) {
-    # No use, too big too great, it's true
-    #
+  # No use, too big too great, it's true
+  if (is.infinite(oriObj[["two.sided"]][["bf"]]))
     return(result)
-  }
 
   # Calculate beta fits of the combined likelihood
   # TODO(Alexander): The fact that kappa=1 sohuldn't be necessary
   if (kappa==1) {
     #
     # methods 3 and 4 are highly dependent on the beta fits based on kappa = 1
-    if (methodNumber %in% 3:4 && any(is.na(c(oriObj[["betaA"]], oriObj[["betaB"]])))) {
-      # Total failure, real sad
+    # Total failure, real sad
+    if (methodNumber %in% 3:4 && any(is.na(c(oriObj[["betaA"]], oriObj[["betaB"]]))))
       return(result)
-    }
 
     repObj <- computePearsonBCor(n=nRep, r=rRep, method=methodNumber, kappa=kappa)
     result[["rep"]] <- repObj
@@ -1467,7 +1541,7 @@ bfCorrieRepJosineKernel <- function(nOri, rOri, nRep, rRep, kappa=1, methodNumbe
     if (!is.na(result$combined$betaA) && !is.na(result$combined$betaB)) {
       # Use beta fit and Savage-Dickey
       browser()
-      tempList <- computeBCorOneSidedSavageDickey(betaA=result$combined$betaA, betaB=result$combined$betaB, kappa=kappa)
+      tempList <- computeBCorOneSidedSavageDickey(bf10=NA, betaA=result$combined$betaA, betaB=result$combined$betaB, kappa=kappa)
       # tempList <- computeCorBf10SavageDickey(betaA=result$combined$betaA, betaB=result$combined$betaB, kappa=kappa,
       #                                         methodNumber=methodNumber)
       result[["combined"]][["two.sided"]][["bf"]] <- tempList$two.sided$bf

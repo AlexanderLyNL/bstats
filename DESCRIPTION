@@ -1,21 +1,21 @@
 Package: bstats
 Type: Package
-Title: Default Bayesian hypothesis tests
-Version: 0.0.1
+Title: Bayesian statistics
+Version: 0.0.0.9002
 Authors@R: c(
-    person("Alexander", "Ly", email = "a.ly@jasp-stats.org", 
+    person("Alexander", "Ly", email = "a.ly@jasp-stats.org",
     role = c("cre", "aut")),
-    person("Johnny", "van Doorn", email = "j.vandoorn@jasp-stats.org", 
+    person("Johnny", "van Doorn", email = "j.vandoorn@jasp-stats.org",
     role = "aut")
     )
-Description: Bayes factors for association between paired samples, using one of 
+Description: Bayes factors for association between paired samples, using one of
     Pearson's product moment correlation coefficient, or Kendall's tau. Spearman's rho
-    to be implemented. For technical details see Ly, Marsman and Wagenmakers (2018) 
+    to be implemented. For technical details see Ly, Marsman and Wagenmakers (2018)
     "Analytic posteriors for Pearson's Correlation Coefficient" <doi:10.1111/stan.12111> 
-    and van Doorn, Ly, Marsman, Wagenmakers (2018). "Bayesian inference for Kendall’s 
-    rank correlation coefficient". <doi:10.1080/00031305.2016.1264998>. 
+    and van Doorn, Ly, Marsman, Wagenmakers (2018). "Bayesian inference for Kendall’s
+    rank correlation coefficient". <doi:10.1080/00031305.2016.1264998>.
 Depends: R (>= 3.4.4)
-Imports: 
+Imports:
     hypergeo (>= 1.2-13),
     purrr (>= 0.2.5),
     SuppDists (>= 1.1-9.4)
