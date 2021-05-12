@@ -254,7 +254,8 @@ posteriorTau <- function(n, tauObs, tauPop, kappa=1, var=1, alternative="two.sid
   posteriorTauF(tauPop)
 }
 
-computeKendallCredibleInterval <- function(n, tauObs, kappa=1, var=1, ciValue=0.95, h0=0, betaA=NULL, betaB=NULL) {
+computeKendallCredibleInterval <- function(n, tauObs, kappa=1, var=1, ciValue=0.95, h0=0,
+                                           betaA=NULL, betaB=NULL) {
   # Compute Kendall's correlation credible interval based on a sampling
   #
   check <- failIfNot(ciValue > 0, ciValue < 1, !isSomeNull(n, tauObs))
@@ -266,16 +267,15 @@ computeKendallCredibleInterval <- function(n, tauObs, kappa=1, var=1, ciValue=0.
     return(result)
 
   for (alternative in c("two.sided", "greater", "less")) {
-    result[[alternative]] <- credibleIntervalKendallTauSingle("n"=n, "tauObs"=tauObs, "kappa"=kappa, "var"=var,
-                                                               "alternative"=alternative, "ciValue"=ciValue,
-                                                              "betaA"=betaA, "betaB"=betaB)
+    result[[alternative]] <- credibleIntervalKendallTauSided("n"=n, "tauObs"=tauObs, "kappa"=kappa, "var"=var,
+                                                             "alternative"=alternative, "ciValue"=ciValue,
+                                                             "betaA"=betaA, "betaB"=betaB)
   }
 
   return(result)
 }
 
-# SINGLE refers to the side
-credibleIntervalKendallTauSingle <- function(n, tauObs, kappa=1, var=1, alternative="two.sided",
+credibleIntervalKendallTauSided <- function(n, tauObs, kappa=1, var=1, alternative="two.sided",
                                              ciValue = 0.95, m=4000, betaA=NULL, betaB=NULL) {
   # TODO(Alexander): Interesting use-case: n=800, tauObs=-0.8, m=1000
   posteriorTauFunc <- makePosteriorTauFunc("n"=n, "tauObs"=tauObs, "kappa"=kappa, "var"=var,
