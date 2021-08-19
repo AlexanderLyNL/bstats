@@ -348,7 +348,7 @@ computeCorSequentialLine <- function(x, y, bfObject) {
     }
 
     if (sum(is.na(result[[j]][[1]])) >= 1) {
-      result[[j]][[1]] <- "Could not compute"
+      result[[j]][[1]] <- "Some of the Bayes factors were NA. This likely suggests computational issues caused by some extreme features of the data, such as too many observations, extreme correlations, etc."
     }
   }
   result[["nDomain"]] <- nDomain
