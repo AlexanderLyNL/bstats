@@ -159,15 +159,14 @@ isSomeNull <- function(...) {
 #' @export
 #'
 #'@examples
-#' x <- 1
-#' y <- "a"
-#' z <- 10^(1e10)
 #'
-#' isSomeInfinite(x, y)
-#' isSomeInfinite(x, y, z)
-#' isSomeInfinite(x, y, z, w)
-isSomeInfinite <- function(...) {
-  isSome(..., func=is.infinite)
+#' isSomeInfinite(1:10)
+#' isSomeInfinite(c(1e2000, 1:1000000))
+#'
+#' # Faster than
+#' # isSomeInfinite(c(1:1000000, 1e2000))
+isSomeInfinite <- function(obj) {
+  purrr::some(obj, is.infinite)
 }
 
 #'Checks whether some object is TRUE

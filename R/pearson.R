@@ -1208,11 +1208,11 @@ posteriorBetaParameters <- function(n, r, kappa=1, oneThreshold=1e-3) {
   # Let rho = 2*x - 1 where x \sim beta, thus, x = (rho+1)/2.Hence, someMu.
   # For the variance we have var(rho)/2^2
   #
-  someMu <- tryOrFailWithNA((posteriorMean("n"=n, "r"=r, "kappa"=kappa, "oneThreshold"=oneThreshold)+1)/2, )
+  someMu <- tryOrFailWithNA((posteriorMean("n"=n, "r"=r, "kappa"=kappa, "oneThreshold"=oneThreshold)+1)/2)
   someVar <- tryOrFailWithNA(posteriorVariance("n"=n, "r"=r, "kappa"=kappa, "oneThreshold"=oneThreshold)/4)
 
 
-  if (isSomeNA(someMu, someVar) || isSomeInfinite(someMu, someVar)) {
+  if (isSomeNA(someMu, someVar) || is.infinte(someMu) || is.infinte(someVar)) {
     # TODO(Alexander): Before doing this try the MH sampler
     return(list(betaA=NA, betaB=NA))
   } else {
@@ -1239,7 +1239,7 @@ computePearsonCredibleInterval <- function(betaA, betaB, ciValue, h0=0) {
   typeOne <- 1-ciValue
   excessLevel <- typeOne/2
 
-  if (isSomeInfinite(betaA, betaB)) {
+  if (is.infinite(betaA) || is.infinite(betaB)) {
     result[["betaA"]] <- NA
     result[["betaB"]] <- NA
     result[["error"]] <- "Can't compute credible intervals"
