@@ -1,7 +1,7 @@
 Package: bstats
 Type: Package
 Title: Bayesian statistics
-Version: 0.0.0.9003
+Version: 0.0.0.9004
 Authors@R: c(
     person("Alexander", "Ly", email = "a.ly@jasp-stats.org",
     role = c("cre", "aut")),
