@@ -1212,7 +1212,7 @@ posteriorBetaParameters <- function(n, r, kappa=1, oneThreshold=1e-3) {
   someVar <- tryOrFailWithNA(posteriorVariance("n"=n, "r"=r, "kappa"=kappa, "oneThreshold"=oneThreshold)/4)
 
 
-  if (isSomeNA(someMu, someVar) || is.infinte(someMu) || is.infinte(someVar)) {
+  if (isSomeNA(someMu, someVar) || is.infinite(someMu) || is.infinite(someVar)) {
     # TODO(Alexander): Before doing this try the MH sampler
     return(list(betaA=NA, betaB=NA))
   } else {
