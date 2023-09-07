@@ -1562,3 +1562,10 @@ bfCorrieRepJosineKernel <- function(nOri, rOri, nRep, rRep, kappa=1, methodNumbe
 }
 
 
+sampleParCor <- function(xyz, use, method) {
+  cmat  <- stats::cov(xyz, method = method, use = use)
+  icmat <- base::chol2inv(base::chol(cmat))
+  pcmat <- -stats::cov2cor(icmat)
+
+  return(pcmat[1,2,drop=TRUE])
+}

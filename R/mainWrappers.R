@@ -3,6 +3,7 @@
 #' This mimics cor.test
 #'
 #' @param x,y numeric vectors of data values. x and y must have the same length
+#' @param z data frame of data values of the controlling variables.
 #' @param alternative indicates the alternative hypothesis and must be one of "two.sided", "greater" or "less".
 #' "greater" corresponds to positive association, "less" to negative association.
 #' @param method a character string indicating which correlation coefficient is to b used for the test. One of
@@ -26,27 +27,39 @@
 #'
 #' bcor.test(x, y)
 #' bcor.test(x, y, method="kendall")
-bcor.test <- function(x, y, alternative=c("two.sided", "less", "greater"),
+#'
+#' z <- data.frame(rnorm(100))
+#' bcor.test(x, y, z)
+bcor.test <- function(x, y, z = NULL, alternative=c("two.sided", "less", "greater"),
                       method=c("pearson", "kendall", "spearman"), ciValue=0.95,
                       use="pairwise.complete.obs", h0=0, kappa=1, hyperGeoOverFlowThreshold=25,
                       oneThreshold=0.001, var=1) {
+  stopifnot(length(x) == length(y))
+  stopifnot(is.null(z) || length(x) == nrow(z))
+
+  method <- match.arg(method)
   if (is.null(method)) {
     result <- computePearsonBCor(NULL, NULL)
     result[["error"]] <- "No method selected"
     return(result)
   }
 
-  stat <- tryOrFailWithNA(cor(x, y, use=use, method=method[1]))
-  n <- tryOrFailWithNA(
-    length(x) - length(
-      unique(c(which(is.na(x)), which(is.na(y))))
-    )
-  )
+  if (is.null(z)) {
+    k <- 0
+    xyz <- cbind(x, y)
+    stat <- tryOrFailWithNA(cor(x, y, use=use, method=method))
+  } else {
+    k <- ncol(z)
+    xyz <- cbind(x, y, z)
+    stat <- tryOrFailWithNA(sampleParCor(xyz, use=use, method=method))
+  }
 
-  result <- bcor.testSumStat("n"=n, "stat"=stat, "alternative"=alternative,
-                             "method"=method, "ciValue"=ciValue, "h0"=h0, "kappa"=kappa,
-                             "hyperGeoOverFlowThreshold"=hyperGeoOverFlowThreshold,
-                             "oneThreshold"=oneThreshold, "var"=var)
+  n <- sum(complete.cases(xyz))
+
+  result <- bcor.testSumStat(n=n, stat=stat, alternative=alternative,
+                             method=method, ciValue=ciValue, h0=h0, kappa=kappa,
+                             hyperGeoOverFlowThreshold=hyperGeoOverFlowThreshold,
+                             oneThreshold=oneThreshold, var=var, k = k)
   result[["call"]] <- match.call()
   return(result)
 }

@@ -8,6 +8,7 @@ This mimics cor.test}
 bcor.test(
   x,
   y,
+  z = NULL,
   alternative = c("two.sided", "less", "greater"),
   method = c("pearson", "kendall", "spearman"),
   ciValue = 0.95,
@@ -21,6 +22,8 @@ bcor.test(
 }
 \arguments{
 \item{x, y}{numeric vectors of data values. x and y must have the same length}
+
+\item{z}{data frame of data values of the controlling variables.}
 
 \item{alternative}{indicates the alternative hypothesis and must be one of "two.sided", "greater" or "less".
 "greater" corresponds to positive association, "less" to negative association.}
@@ -54,4 +57,7 @@ y <- rnorm(100)
 
 bcor.test(x, y)
 bcor.test(x, y, method="kendall")
+
+z <- data.frame(rnorm(100))
+bcor.test(x, y, z)
 }
