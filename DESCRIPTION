@@ -24,5 +24,5 @@ Encoding: UTF-8
 LazyData: true
 URL: http://www.alexander-ly.com/, https://github.com/alexanderlynl/
 BugReports: https://github.com/alexanderlynl/bstats/issues
-RoxygenNote: 6.1.1
+RoxygenNote: 7.2.3
 Language: en-GB
