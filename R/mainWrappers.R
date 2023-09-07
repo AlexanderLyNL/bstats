@@ -53,45 +53,49 @@ bcor.test <- function(x, y, alternative=c("two.sided", "less", "greater"),
 
 #' Summary stats version of "bcor.test()"
 #'
-#' @param n
-#' @param stat
+#' @param n number of observations
+#' @param stat sample correlation coefficient
+#' @param k number of controlling variables
 #' @inherit bcor.test
 #'
 #' @export
 #'
-#' @examples#'
+#' @examples
 #' bcor.testSumStat(n=34, stat=0.4)
 #' bcor.testSumStat(n=34, stat=0.4, method="kendall")
+#' bcor.testSumStat(n=34, stat=0.45, k = 1)
 bcor.testSumStat <- function(n, stat, alternative=c("two.sided", "less", "greater"),
                              method=c("pearson", "kendall", "spearman"), ciValue=0.95,
-                             h0=0, kappa=1, hyperGeoOverFlowThreshold=25, oneThreshold=0.001, var=1) {
+                             h0=0, kappa=1, hyperGeoOverFlowThreshold=25, oneThreshold=0.001, var=1, k = 0) {
   method <- match.arg(method)
   alternative <- match.arg(alternative)
 
-  if (is.na(stat) || is.na(n) || n <= 0) {
-    if (method=="pearson") {
-      result <- computePearsonBCor(NaN, NaN)
-    } else if (method=="kendall") {
+  if (method == "spearman")
+    warning("`method`=='spearman' was called but Spearman method is not yet implemented!")
+
+  if (is.na(stat) || is.na(n) || n <= k) {
+    if (method == 'kendall') {
       result <- computeKendallBCor(NaN, NaN)
+    } else {
+      result <- computePearsonBCor(NaN, NaN)
     }
-
     result[["error"]] <- "Can't compute the correlation"
+  } else {
+    result <- switch(
+      method,
+      pearson=computePearsonBCor(n=n-k, r=stat, h0=h0, kappa=kappa, ciValue=ciValue,
+                                 hyperGeoOverFlowThreshold=hyperGeoOverFlowThreshold,
+                                 oneThreshold = oneThreshold),
+      kendall=computeKendallBCor(n=n, tauObs=stat, h0=h0, kappa=kappa, ciValue=ciValue,
+                                 oneThreshold=oneThreshold, var=var),
+      spearman=computePearsonBCor(n=NA, r=NA, h0=h0, kappa=kappa, ciValue=ciValue,
+                                  oneThreshold=oneThreshold)
+      )
   }
 
-  if (method=="pearson") {
-    result <- computePearsonBCor("n"=n, "r"=stat, "h0"=h0, "kappa"=kappa, "ciValue"=ciValue,
-                                     "hyperGeoOverFlowThreshold"=hyperGeoOverFlowThreshold,
-                                     "oneThreshold" = oneThreshold)
-  } else if (method=="kendall") {
-    result <- computeKendallBCor("n"=n, "tauObs"=stat, "h0"=h0, "kappa"=kappa, "ciValue"=ciValue,
-                                     "oneThreshold"=oneThreshold, "var"=var)
-  } else if (method[1]=="spearman") {
-    print("NOT YET THIS IS JUST PEARSON AS A PLACEHOLDER")
-    result <- computePearsonBCor("n"=NA, "r"=NA, "h0"=h0, "kappa"=kappa, "ciValue"=ciValue,
-                                     "oneThreshold" = oneThreshold)
-  }
   result[["alternative"]] <- alternative
   result[["method"]] <- method
+  result[["k"]] <- k
   return(result)
 }
 
